@@ -29,7 +29,7 @@ public class TimeRangeService {
                 .toList();
     }
 
-    public Stream<Period> joinAdjacentPeriods(List<Period> periods) {
+    private Stream<Period> joinAdjacentPeriods(List<Period> periods) {
         for(int i=0; i < periods.size()-1; i++){
             Period current = periods.get(i);
             Period next = periods.get(i+1);
@@ -41,7 +41,7 @@ public class TimeRangeService {
         return periods.stream().filter(Objects::nonNull);
     }
 
-    public List<Period> getPossibleMeetingsFromCalendar(CalendarDTO calendar, long meetingDurationMinutes){
+    private List<Period> getPossibleMeetingsFromCalendar(CalendarDTO calendar, long meetingDurationMinutes){
         LocalTime workingHoursStart = calendar.workingHours().start();
         LocalTime workingHoursEnd = calendar.workingHours().end();
         return Stream.iterate(workingHoursStart,
@@ -53,7 +53,7 @@ public class TimeRangeService {
                 .collect(Collectors.toList());
     }
 
-    public long parseStrToDurationMinutes(String str){
+    private long parseStrToDurationMinutes(String str){
         long hours = Long.parseLong(str.split(":")[0]);
         long minutes = Long.parseLong(str.split(":")[1]);
         return hours*60+minutes;
