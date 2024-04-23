@@ -5,6 +5,7 @@ import com.bekrenovr.spotkajmysie.dto.Period;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -14,11 +15,16 @@ import java.util.stream.Stream;
 public class TimeRangeService {
 
     public List<List<LocalTime>> generateTimeRanges(List<CalendarDTO> calendars, String meetingDuration) {
+        if(calendars.size() < 2)
+            throw new RuntimeException("At least two calendars are expected");
         long meetingDurationMinutes = parseStrToDurationMinutes(meetingDuration);
-        List<Period> possibleMeetings1 = getPossibleMeetingsFromCalendar(calendars.get(0), meetingDurationMinutes);
-        List<Period> possibleMeetings2 = getPossibleMeetingsFromCalendar(calendars.get(1), meetingDurationMinutes);
-        possibleMeetings1.retainAll(possibleMeetings2);
-        return joinAdjacentPeriods(possibleMeetings1)
+        List<Period> possibleMeetings = calendars.stream()
+                .map(calendar -> getPossibleMeetingsFromCalendar(calendar, meetingDurationMinutes))
+                .reduce((prevList, nextList) -> prevList.stream()
+                        .filter(nextList::contains)
+                        .collect(Collectors.toList()))
+                .orElseGet(ArrayList::new);
+        return joinAdjacentPeriods(possibleMeetings)
                 .map(m -> List.of(m.start(), m.end()))
                 .toList();
     }
@@ -36,7 +42,6 @@ public class TimeRangeService {
     }
 
     public List<Period> getPossibleMeetingsFromCalendar(CalendarDTO calendar, long meetingDurationMinutes){
-        List<Period> workingMeetings = calendar.workingMeetings();
         LocalTime workingHoursStart = calendar.workingHours().start();
         LocalTime workingHoursEnd = calendar.workingHours().end();
         return Stream.iterate(workingHoursStart,
@@ -44,7 +49,7 @@ public class TimeRangeService {
                                 || time.plusMinutes(meetingDurationMinutes).equals(workingHoursEnd),
                         time -> time.plusMinutes(meetingDurationMinutes))
                 .map(time -> new Period(time, time.plusMinutes(meetingDurationMinutes)))
-                .filter(m -> workingMeetings.stream().noneMatch(m::overlaps))
+                .filter(period -> calendar.plannedMeetings().stream().noneMatch(period::overlaps))
                 .collect(Collectors.toList());
     }
 

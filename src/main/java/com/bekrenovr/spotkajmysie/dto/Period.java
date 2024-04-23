@@ -1,6 +1,5 @@
 package com.bekrenovr.spotkajmysie.dto;
 
-import java.time.Duration;
 import java.time.LocalTime;
 
 public record Period(LocalTime start, LocalTime end) {
@@ -13,9 +12,6 @@ public record Period(LocalTime start, LocalTime end) {
     }
 
     public boolean contains(LocalTime time){
-        if(start.isAfter(end)){
-            return time.isBefore(end) && time.isBefore(start) || time.equals(start) || time.equals(end);
-        }
         return time.isAfter(start) && time.isBefore(end);
     }
 }
